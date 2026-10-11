@@ -15,24 +15,24 @@ def main():
 
 
 def add_expense(args):
-    if not DB_exist:
+    if not DB_exist():
         create_DB()
 
     id = get_last_ID() + 1
     date = datetime.datetime.now().strftime("%x")
     new_row = [id, date, args.description, args.amount]
 
-    # with open(DB_NAME, 'w') as csv_file:
-    #     csv_writer = csv.writer(csv_file)
-    #     csv_writer.writerow(new_row)
+    with open(DB_NAME, 'a') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow(new_row)
 
 
 # return the number of expenses in DB
 def get_last_ID() -> int:
-    if not DB_exist:
-        return
+    if not DB_exist():
+        return -1
 
-    with open(DB_NAME, 'w' ,newline='') as csv_file:
+    with open(DB_NAME, 'r' ,newline='') as csv_file:
         csv_reader = csv.reader(csv_file)
         return sum(1 for row in csv_reader) - 1
 
@@ -44,7 +44,7 @@ def DB_exist() -> bool:
 
 # create DB if not exist
 def create_DB():
-    if DB_exist:
+    if DB_exist():
         return
     with open(DB_NAME, 'w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
