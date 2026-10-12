@@ -13,11 +13,42 @@ def main():
 
     match args.action:
         case 'add': add_expense(args)
-        case 'list': show_expenses()
-        case 'summary': sum_expenses()
+        case 'list': print_expenses()
+        case 'summary': print_summary(args)  # by month or generic
         case 'delete': delete_expense(args)
 
 
+# print summary of expenses by month if provided or generic otherwise
+def print_summary(args):
+    if not DB_exist():
+        print(0)
+        return
+
+    if args.month is None:
+        print(sum_expenses())
+    else:
+        total = sum_expenses_by_month(int(args.month))
+        print(f'Total expenses: ${total}')
+
+
+# return the sum of expenses in a given month
+def sum_expenses_by_month(month) -> int:
+    total = 0
+    with open(DB_NAME, 'r') as csv_file:
+        csv_dictreader = csv.DictReader(csv_file)
+        for row in csv_dictreader:
+            date_str = row['Date']
+            date_arr = date_str.split('/')
+            curr_month = int(date_arr[0])
+
+            if (curr_month == month):
+                curr_amount = int(row['Amount'])
+                total = total + curr_amount
+
+    return total
+
+
+# delete an expense
 def delete_expense(args):
     if not DB_exist():
         return
@@ -52,15 +83,15 @@ def delete_expense(args):
         csv_writer.writerows(data)
 
 
-def decrease_indexes(data, id):
-    for i in range(id, len(data)):
+# decrease the indexes of expences in DB, starts from a given number (id)
+def decrease_indexes(data, start):
+    for i in range(start, len(data)):
         curr_index = int(data[i][0])
         data[i][0] = curr_index - 1
 
 
+# return the sum of all expenses
 def sum_expenses():
-    if not DB_exist():
-        return
     total = 0
     with open(DB_NAME, 'r') as csv_file:
         csv_reader = csv.reader(csv_file)
@@ -68,10 +99,11 @@ def sum_expenses():
         for row in csv_reader:
             total = total + int(row[3])
 
-    print(f'Total expenses: ${total}')
+    return total
 
 
-def show_expenses():
+# print all expenses
+def print_expenses():
     if not DB_exist():
         return
     with open(DB_NAME, 'r') as csv_file:
@@ -80,6 +112,7 @@ def show_expenses():
             print(row)
 
 
+# add expense to DB
 def add_expense(args):
     if not DB_exist():
         create_DB()
