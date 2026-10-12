@@ -28,6 +28,7 @@ def main():
             else:
                 print('No expense was written off.')
 
+#
 
 # print summary of expenses by month if provided or generic otherwise
 def print_summary(args):
