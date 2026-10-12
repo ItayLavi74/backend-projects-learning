@@ -1,21 +1,32 @@
-from user_input import get_args
 import csv
 import os
 import datetime
-import pprint
+
+from user_input import get_args
+from input_validation import *
 
 DB_NAME = 'DB.csv'
 FIELDS_ROW = ['ID', 'Date', 'Description', 'Amount']
 
 
+# main action selection
 def main():
     args = get_args()
 
     match args.action:
-        case 'add': add_expense(args)
+        case 'add':
+            if add_expense(args):
+                print('The expense added successfully')
+            else:
+                print('The expense was not added.')
+
         case 'list': print_expenses()
         case 'summary': print_summary(args)  # by month or generic
-        case 'delete': delete_expense(args)
+        case 'delete':
+            if delete_expense(args):
+                print('The expense deleted successfully')
+            else:
+                print('No expense was written off.')
 
 
 # print summary of expenses by month if provided or generic otherwise
@@ -48,28 +59,29 @@ def sum_expenses_by_month(month) -> int:
     return total
 
 
-# delete an expense
-def delete_expense(args):
+# delete an expense, return if expense deleted successfully
+def delete_expense(args) -> bool:
     if not DB_exist():
-        return
+        print('ERROR: expense must be added before deletion')
+        return False
 
     # if id is missing
-    if args.id is None:
+    if not is_arg_provided(args.id):
         print('ERROR: id is missing.')
-        return
+        return False
 
     data = []
     id = int(args.id)
-
-    if id < 1:
-        print('ERROR: id must be greater that 1.')
-        return
 
     # read and store all data from DB
     with open(DB_NAME, 'r', newline='') as csv_file:
         csv_reader = csv.reader(csv_file)
         for row in csv_reader:
             data.append(row)
+
+    if not is_valid_id(id, len(data)):
+        print('ERROR: id is out of range.')
+        return False
 
     # delete the line
     del data[id]
@@ -81,6 +93,8 @@ def delete_expense(args):
     with open(DB_NAME, 'w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerows(data)
+
+    return True
 
 
 # decrease the indexes of expences in DB, starts from a given number (id)
@@ -112,19 +126,26 @@ def print_expenses():
             print(row)
 
 
-# add expense to DB
-def add_expense(args):
+# add expense to DB, return if expense added successfully
+def add_expense(args) -> bool:
     if not DB_exist():
         create_DB()
 
     id = get_last_ID() + 1
     date = datetime.datetime.now().strftime("%x")
-    amount = 0 if args.amount is None else args.amount
+    amount = 0 if args.amount is None else int(args.amount)
+
+    if not is_valid_amount(amount):
+        print('ERROR: amount must be non negative.')
+        return False
+
     new_row = [id, date, args.description, amount]
 
     with open(DB_NAME, 'a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(new_row)
+
+    return True
 
 
 # return the number of expenses in DB
@@ -142,7 +163,7 @@ def DB_exist() -> bool:
     return os.path.isfile(DB_NAME)
 
 
-# create DB if not exist
+# create DB file if not exist
 def create_DB():
     if DB_exist():
         return
