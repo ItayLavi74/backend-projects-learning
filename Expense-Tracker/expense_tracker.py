@@ -27,8 +27,29 @@ def main():
                 print('The expense deleted successfully')
             else:
                 print('No expense was written off.')
+        case 'update':
+            if update(args):
+                print('The expense updated successfully')
+            else:
+                print('No expense was updated.')
 
-#
+
+# update an existing task, return if expense was updated
+def update(args) -> bool:
+    # check if DB_exist before updating an expense
+    if not DB_exist():
+        print('ERROR: task must be added before updating.')
+        return False
+
+    if not is_valid_amount(args.id):
+        print('ERROR: id is not provided.')
+        return False
+
+    # fetch content from DB file to data as 2d array
+    data = get_DB()
+
+    return True
+
 
 # print summary of expenses by month if provided or generic otherwise
 def print_summary(args):
@@ -62,6 +83,7 @@ def sum_expenses_by_month(month) -> int:
 
 # delete an expense, return if expense deleted successfully
 def delete_expense(args) -> bool:
+    # check if DB exist before deleting
     if not DB_exist():
         print('ERROR: expense must be added before deletion')
         return False
@@ -71,15 +93,12 @@ def delete_expense(args) -> bool:
         print('ERROR: id is missing.')
         return False
 
-    data = []
     id = int(args.id)
 
-    # read and store all data from DB
-    with open(DB_NAME, 'r', newline='') as csv_file:
-        csv_reader = csv.reader(csv_file)
-        for row in csv_reader:
-            data.append(row)
+    # fetch DB content to data as a 2d array
+    data = get_DB()
 
+    # check if id is in valid range
     if not is_valid_id(id, len(data)):
         print('ERROR: id is out of range.')
         return False
@@ -91,9 +110,7 @@ def delete_expense(args) -> bool:
     decrease_indexes(data, id)
 
     # rewrite DB after changes
-    with open(DB_NAME, 'w', newline='') as csv_file:
-        csv_writer = csv.writer(csv_file)
-        csv_writer.writerows(data)
+    write_DB(data)
 
     return True
 
@@ -119,6 +136,7 @@ def sum_expenses():
 
 # print all expenses
 def print_expenses():
+    # check if DB_exist before printing
     if not DB_exist():
         return
     with open(DB_NAME, 'r') as csv_file:
@@ -129,6 +147,7 @@ def print_expenses():
 
 # add expense to DB, return if expense added successfully
 def add_expense(args) -> bool:
+    # check if DB_exist before adding an expense
     if not DB_exist():
         create_DB()
 
@@ -166,11 +185,31 @@ def DB_exist() -> bool:
 
 # create DB file if not exist
 def create_DB():
+    # check if DB file already exist
     if DB_exist():
         return
     with open(DB_NAME, 'w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(FIELDS_ROW)
+
+
+# return csv content as a 2d array
+def get_DB() -> list:
+    data = []
+    # read and store all data from DB
+    with open(DB_NAME, 'r', newline='') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for row in csv_reader:
+            data.append(row)
+
+    return data
+
+
+# rewrite DB file to given 2d content array
+def write_DB(data):
+    with open(DB_NAME, 'w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerows(data)
 
 
 if __name__ == '__main__':
