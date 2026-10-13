@@ -41,12 +41,47 @@ def update(args) -> bool:
         print('ERROR: task must be added before updating.')
         return False
 
-    if not is_valid_amount(args.id):
+    # check if id is provided
+    if not is_arg_provided(args.id):
         print('ERROR: id is not provided.')
+        return False
+
+    provided_description = is_arg_provided(args.description)
+    provided_amount = is_arg_provided(args.amount)
+
+    # check if at least one argument is given to change
+    if not provided_description and not provided_amount:
+        print('ERROR: to update an expence,'
+              'you must provide at least one argument: --description, --amount')
         return False
 
     # fetch content from DB file to data as 2d array
     data = get_DB()
+
+    # check if id is in DB id's range
+    if not is_valid_id(args.id, len(data)):
+        print('ERROR: id is out of range.')
+        return False
+
+    id = int(args.id)
+
+    # fetch wanted line
+    row = data[id]
+
+    # modify row arguments if provided
+    if provided_description:
+        row[2] = args.description
+    if provided_amount:
+        if not is_valid_amount(args.amount):
+            print('ERROR: amount must be a positive number.')
+            return False
+        row[3] = args.amount
+
+    # update row in data
+    data[id] = row
+
+    # rewrite DB after changes
+    write_DB(data)
 
     return True
 
@@ -57,15 +92,21 @@ def print_summary(args):
         print(0)
         return
 
-    if args.month is None:
+    if not is_arg_provided(args.month):
         print(sum_expenses())
     else:
-        total = sum_expenses_by_month(int(args.month))
+        if not is_valid_month(args.month):
+            print('ERROR: month is not valid.')
+            return False
+        total = sum_expenses_by_month(args)
         print(f'Total expenses: ${total}')
 
 
 # return the sum of expenses in a given month
-def sum_expenses_by_month(month) -> int:
+def sum_expenses_by_month(args) -> int:
+
+    # month validation checked before calling this function
+    month = int(args.month)
     total = 0
     with open(DB_NAME, 'r') as csv_file:
         csv_dictreader = csv.DictReader(csv_file)
@@ -93,15 +134,15 @@ def delete_expense(args) -> bool:
         print('ERROR: id is missing.')
         return False
 
-    id = int(args.id)
-
     # fetch DB content to data as a 2d array
     data = get_DB()
 
-    # check if id is in valid range
-    if not is_valid_id(id, len(data)):
+    # check if id is valid
+    if not is_valid_id(args.id, len(data)):
         print('ERROR: id is out of range.')
         return False
+
+    id = int(args.id)
 
     # delete the line
     del data[id]
@@ -153,13 +194,21 @@ def add_expense(args) -> bool:
 
     id = get_last_ID() + 1
     date = datetime.datetime.now().strftime("%x")
-    amount = 0 if args.amount is None else int(args.amount)
 
-    if not is_valid_amount(amount):
-        print('ERROR: amount must be non negative.')
+    # check if arguments provided
+    if not is_arg_provided(args.amount):
+        print('ERROR: amount is missing.')
+        return False
+    if not is_arg_provided(args.description):
+        print('ERROR: description is missing.')
         return False
 
-    new_row = [id, date, args.description, amount]
+    # check if month is valid
+    if not is_valid_amount(args.amount):
+        print('ERROR: amount must be a a positive number.')
+        return False
+
+    new_row = [id, date, args.description, args.amount]
 
     with open(DB_NAME, 'a', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)

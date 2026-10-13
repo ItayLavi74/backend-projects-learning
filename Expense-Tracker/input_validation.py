@@ -3,16 +3,23 @@ This file is dedicated for functions that
 check if the input that provided by the user is valid
 '''
 
+
 def is_valid_amount(amount) -> bool:
-    return amount >= 0
+    if not amount.isnumeric():
+        return False
+    return int(amount) > 0
 
 
 def is_valid_month(month) -> bool:
-    return 1 <= month <= 12
+    if not month.isnumeric():
+        return False
+    return 1 <= int(month) <= 12
 
 
 def is_valid_id(id, max) -> bool:
-    return 1 <= id < max
+    if not id.isnumeric():
+        return False
+    return 1 <= int(id) < max
 
 
 def is_arg_provided(value):
