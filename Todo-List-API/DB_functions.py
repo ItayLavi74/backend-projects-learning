@@ -1,8 +1,13 @@
 import psycopg2
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 DB_NAME = os.getenv('DB_NAME')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
+
 
 conn = psycopg2.connect(dbname=DB_NAME, password=DB_PASSWORD, user='postgres')
 cur = conn.cursor()
