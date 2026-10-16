@@ -18,32 +18,32 @@ def validate_register(data) -> ValidationResponse:
     response = ValidationResponse()
 
     response.data = data
-    response.syntax = check_register_syntax(response)
+    response.syntax = _check_register_syntax(response)
     response.in_DB = True
     response.ok = response.syntax and response.in_DB
 
     return response
 
 
-def check_register_syntax(response: ValidationResponse) -> bool:
+def _check_register_syntax(response: ValidationResponse) -> bool:
     flag = True
 
-    if not validate_keys(response):
+    if not _validate_keys(response):
         flag = False
 
-    if not check_name(response):
+    if not _check_name(response):
         flag = False
 
-    if not check_email(response):
+    if not _check_email(response):
         flag = False
 
-    if not check_password(response):
+    if not _check_password(response):
         flag = False
 
     return flag
 
 
-def validate_keys(response) -> bool:
+def _validate_keys(response) -> bool:
     received_keys = list(response.data.keys())
 
     if received_keys != REGISTER_JSON_KEYS:
@@ -53,7 +53,7 @@ def validate_keys(response) -> bool:
     return True
 
 
-def check_name(response) -> bool:
+def _check_name(response) -> bool:
     name = response.data['name']
     allowed_chars = set(string.ascii_letters + ' ')
 
@@ -64,7 +64,7 @@ def check_name(response) -> bool:
     return False
 
 
-def check_password(response) -> bool:
+def _check_password(response) -> bool:
     password = response.data['password']
     allowed_chars = set(string.ascii_letters + string.digits)
 
@@ -76,7 +76,7 @@ def check_password(response) -> bool:
     return False
 
 
-def check_email(response) -> bool:
+def _check_email(response) -> bool:
     email = response.data['email']
     try:
         validate_email(email)
