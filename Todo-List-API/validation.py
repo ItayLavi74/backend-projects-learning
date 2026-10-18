@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from email_validator import validate_email
 import string
+from DB_functions import email_exists
 
 REGISTER_JSON_KEYS = ['name', 'email', 'password']
 
@@ -13,15 +14,18 @@ class ValidationResponse():
     errors: list[str] = field(default_factory=list)
     ok: bool | None = None
 
-
+# validate registeration data
 def validate_register(data) -> ValidationResponse:
     response = ValidationResponse()
 
     response.data = data
     response.syntax = _check_register_syntax(response)
-    response.in_DB = True
-    response.ok = response.syntax and response.in_DB
+    response.in_DB = email_exists(data['email'])
+    response.ok = response.syntax and not response.in_DB
 
+    if response.in_DB:
+        response.errors.append('This email is already registered')
+    
     return response
 
 
@@ -92,7 +96,7 @@ def _check_email(response) -> bool:
     if email == '':
         response.errors.append('invalid email, email cannot be empty')
         return False
-
+    
     try:
         validate_email(email)
         return True
